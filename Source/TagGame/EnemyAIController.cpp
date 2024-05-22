@@ -2,6 +2,7 @@
 
 
 #include "EnemyAIController.h"
+#include "TagGameGameMode.h"
 
 AEnemyAIController::AEnemyAIController()
 {
@@ -134,6 +135,8 @@ void AEnemyAIController::BeginPlay()
 				IGrabbable::Execute_Grab(NearestGrabbableObject, AIController->GetWorld()->GetFirstPlayerController()->GetPawn());
 				BlackboardComponent->SetValueAsObject(NearestGrabbableObjectKey, nullptr);
 			}
+
+			OnObjectPassedToPlayer.ExecuteIfBound();
 
 			return SearchForGrabbableObject;
 		}

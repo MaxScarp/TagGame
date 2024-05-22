@@ -8,8 +8,11 @@
 #include "Navigation/PathFollowingComponent.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "UObject/ConstructorHelpers.h"
-#include "TagGameGameMode.h"
 #include "EnemyAIController.generated.h"
+
+class ATagGameGameMode; // Forward Declaration
+
+DECLARE_DELEGATE(FOnObjectPassedToPlayer);
 
 struct CustomAIState : public TSharedFromThis<CustomAIState>
 {
@@ -84,8 +87,9 @@ class TAGGAME_API AEnemyAIController : public AAIController
 public:
 	AEnemyAIController();
 
+	FOnObjectPassedToPlayer OnObjectPassedToPlayer;
+
 protected:
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
 	UBlackboardComponent* BlackboardComponent;
 
 	UEnemyAIBlackboardData* BlackboardData;

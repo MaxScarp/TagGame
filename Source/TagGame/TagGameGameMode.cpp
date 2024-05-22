@@ -2,6 +2,7 @@
 
 #include "TagGameGameMode.h"
 #include "TagGameCharacter.h"
+#include "EnemyAIController.h"
 #include "UObject/ConstructorHelpers.h"
 
 ATagGameGameMode::ATagGameGameMode()
@@ -16,6 +17,15 @@ ATagGameGameMode::ATagGameGameMode()
 
 void ATagGameGameMode::ResetMatch()
 {
+	if (GrabbableObjectPassedToPlayerCounter < GrabbableObjects.Num())
+	{
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("MATCH RESETTED!"));
+
+	GrabbableObjectPassedToPlayerCounter = 0;
+
 	TargetPoints.Empty();
 	GrabbableObjects.Empty();
 	Enemies.Empty();
@@ -40,6 +50,16 @@ void ATagGameGameMode::ResetMatch()
 		}
 
 		Enemies.Add(*It);
+		AEnemyAIController* EnemyController = Cast<AEnemyAIController>(It->GetController());
+		if (EnemyController)
+		{
+			EnemyController->OnObjectPassedToPlayer.BindLambda(
+				[this]()
+				{
+					GrabbableObjectPassedToPlayerCounter++;
+					ResetMatch();
+				});
+		}
 	}
 
 	if (GrabbableObjects.Num() > TargetPoints.Num() || GrabbableObjects.Num() < Enemies.Num())

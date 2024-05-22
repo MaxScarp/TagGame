@@ -12,6 +12,9 @@
 #include "Kismet/GameplayStatics.h"
 #include "TagGameGameMode.generated.h"
 
+// Forward declaration
+class AEnemyAIController;
+
 UCLASS(minimalapi)
 class ATagGameGameMode : public AGameModeBase
 {
@@ -21,6 +24,7 @@ protected:
 	TArray<AActor*> TargetPoints;
 	TArray<AActor*> GrabbableObjects;
 	TArray<APawn*> Enemies;
+	int32 GrabbableObjectPassedToPlayerCounter;
 
 public:
 	ATagGameGameMode();
