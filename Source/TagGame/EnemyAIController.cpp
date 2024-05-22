@@ -3,9 +3,19 @@
 
 #include "EnemyAIController.h"
 
+AEnemyAIController::AEnemyAIController()
+{
+	BlackboardComponent = CreateDefaultSubobject<UBlackboardComponent>(TEXT("BlackboardComponent"));
+	BlackboardData = CreateDefaultSubobject<UEnemyAIBlackboardData>(TEXT("BlackboardData"));
+
+	NearestGrabbableObjectKey = TEXT("NearestGrabbableObject");
+}
+
 void AEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
+
+	InitializeBlackboard(*BlackboardComponent, *BlackboardData);
 
 	SearchForGrabbableObject = MakeShared<CustomAIState>(
 		[this](AAIController* AIController)
@@ -31,12 +41,12 @@ void AEnemyAIController::BeginPlay()
 				}
 			}
 
-			NearestGrabbableObject = CurrentGrabbableObject;
+			BlackboardComponent->SetValueAsObject(NearestGrabbableObjectKey, CurrentGrabbableObject);
 		},
 		nullptr,
 		[this](AAIController* AIController, const float DeltaTime) -> TSharedPtr<CustomAIState>
 		{
-			if (NearestGrabbableObject)
+			if (BlackboardComponent->GetValueAsObject(NearestGrabbableObjectKey))
 			{
 				return GoToNearestGrabbableObject;
 			}
@@ -48,11 +58,12 @@ void AEnemyAIController::BeginPlay()
 	GoToNearestGrabbableObject = MakeShared<CustomAIState>(
 		[this](AAIController* AIController)
 		{
-			AIController->MoveToActor(NearestGrabbableObject);
+			AIController->MoveToActor(Cast<AActor>(BlackboardComponent->GetValueAsObject(NearestGrabbableObjectKey)));
 		},
 		nullptr,
 		[this](AAIController* AIController, const float DeltaTime) -> TSharedPtr<CustomAIState>
 		{
+			AActor* NearestGrabbableObject = Cast<AActor>(BlackboardComponent->GetValueAsObject(NearestGrabbableObjectKey));
 			if (NearestGrabbableObject->GetAttachParentActor())
 			{
 				return SearchForGrabbableObject;
@@ -76,14 +87,15 @@ void AEnemyAIController::BeginPlay()
 	TakeGrabbableObject = MakeShared<CustomAIState>(
 		[this](AAIController* AIController)
 		{
-			if (NearestGrabbableObject->GetAttachParentActor())
+			if (Cast<AActor>(BlackboardComponent->GetValueAsObject(NearestGrabbableObjectKey))->GetAttachParentActor())
 			{
-				NearestGrabbableObject = nullptr;
+				BlackboardComponent->SetValueAsObject(NearestGrabbableObjectKey, nullptr);
 			}
 		},
 		nullptr,
 		[this](AAIController* AIController, const float DeltaTime) -> TSharedPtr<CustomAIState>
 		{
+			AActor* NearestGrabbableObject = Cast<AActor>(BlackboardComponent->GetValueAsObject(NearestGrabbableObjectKey));
 			if (!NearestGrabbableObject)
 			{
 				return SearchForGrabbableObject;
@@ -103,6 +115,7 @@ void AEnemyAIController::BeginPlay()
 		nullptr,
 		[this](AAIController* AIController, const float DeltaTime) -> TSharedPtr<CustomAIState>
 		{
+			AActor* NearestGrabbableObject = Cast<AActor>(BlackboardComponent->GetValueAsObject(NearestGrabbableObjectKey));
 			AIController->MoveToActor(AIController->GetWorld()->GetFirstPlayerController()->GetPawn());
 
 			EPathFollowingStatus::Type FollowingStatus = AIController->GetMoveStatus();
@@ -119,7 +132,7 @@ void AEnemyAIController::BeginPlay()
 			if (NearestGrabbableObject->Implements<UGrabbable>())
 			{
 				IGrabbable::Execute_Grab(NearestGrabbableObject, AIController->GetWorld()->GetFirstPlayerController()->GetPawn());
-				NearestGrabbableObject = nullptr;
+				BlackboardComponent->SetValueAsObject(NearestGrabbableObjectKey, nullptr);
 			}
 
 			return SearchForGrabbableObject;

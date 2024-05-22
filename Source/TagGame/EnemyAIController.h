@@ -4,7 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "AIController.h"
+#include "EnemyAIBlackboardData.h"
 #include "Navigation/PathFollowingComponent.h"
+#include "BehaviorTree/BlackboardComponent.h"
+#include "UObject/ConstructorHelpers.h"
 #include "TagGameGameMode.h"
 #include "EnemyAIController.generated.h"
 
@@ -78,17 +81,27 @@ class TAGGAME_API AEnemyAIController : public AAIController
 {
 	GENERATED_BODY()
 
+public:
+	AEnemyAIController();
+
 protected:
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "AI")
+	UBlackboardComponent* BlackboardComponent;
+
+	UEnemyAIBlackboardData* BlackboardData;
+
 	TSharedPtr<CustomAIState> CurrentState;
 	TSharedPtr<CustomAIState> ChasePlayer;
 	TSharedPtr<CustomAIState> SearchForGrabbableObject;
 	TSharedPtr<CustomAIState> GoToNearestGrabbableObject;
 	TSharedPtr<CustomAIState> TakeGrabbableObject;
 
-	AActor* NearestGrabbableObject;
 	const double MaxDistanceFromPlayer = 100.0;
 	const double MinDistanceFromGrabbable = 100.0;
 
 	void BeginPlay() override;
 	void Tick(float DeltaTime) override;
+
+private:
+	FName NearestGrabbableObjectKey;
 };
