@@ -5,8 +5,13 @@
 
 UEnemyAIBlackboardData::UEnemyAIBlackboardData()
 {
-    FBlackboardEntry Entry;
-    Entry.EntryName = TEXT("NearestGrabbableObject");
-    Entry.KeyType = NewObject<UBlackboardKeyType_Object>();
-    Keys.Add(Entry);
+    FBlackboardEntry NearestGrabbableObjectEntry;
+    NearestGrabbableObjectEntry.EntryName = TEXT("NearestGrabbableObject");
+    NearestGrabbableObjectEntry.KeyType = NewObject<UBlackboardKeyType_Object>();
+    Keys.Add(NearestGrabbableObjectEntry);
+
+    FBlackboardEntry TargetPointToFlee;
+    TargetPointToFlee.EntryName = TEXT("TargetPointToFlee");
+    TargetPointToFlee.KeyType = NewObject<UBlackboardKeyType_Object>();
+    Keys.Add(TargetPointToFlee);
 }

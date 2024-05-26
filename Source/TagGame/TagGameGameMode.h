@@ -33,4 +33,6 @@ public:
 	
 	void ResetMatch();
 	const TArray<AActor*>& GetGrabbableObjects() const;
+	const TArray<AActor*>& GetTargetPoints() const;
+	const int32 GetTargetPointsNumIndexed() const;
 };

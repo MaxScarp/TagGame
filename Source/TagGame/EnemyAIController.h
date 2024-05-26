@@ -89,23 +89,34 @@ public:
 
 	FOnObjectPassedToPlayer OnObjectPassedToPlayer;
 
+	void ReceiveGrabbableObjectFromPlayer() const;
+
 protected:
+	ATagGameGameMode* GameMode;
 	UBlackboardComponent* BlackboardComponent;
 
 	UEnemyAIBlackboardData* BlackboardData;
 
 	TSharedPtr<CustomAIState> CurrentState;
-	TSharedPtr<CustomAIState> ChasePlayer;
+
 	TSharedPtr<CustomAIState> SearchForGrabbableObject;
 	TSharedPtr<CustomAIState> GoToNearestGrabbableObject;
 	TSharedPtr<CustomAIState> TakeGrabbableObject;
+	TSharedPtr<CustomAIState> ChasePlayer;
+	TSharedPtr<CustomAIState> Flee;
 
 	const double MaxDistanceFromPlayer = 100.0;
 	const double MinDistanceFromGrabbable = 100.0;
+	
+	const float MaxChangeFleeTargetTimer = 5.0f;
+	float FleeTimer;
 
 	void BeginPlay() override;
 	void Tick(float DeltaTime) override;
 
 private:
 	FName NearestGrabbableObjectKey;
+	FName TargetPointToFleeKey;
+
+	void SetTargetPointToFlee() const;
 };

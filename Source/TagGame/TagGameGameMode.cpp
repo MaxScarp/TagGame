@@ -87,6 +87,16 @@ const TArray<AActor*>& ATagGameGameMode::GetGrabbableObjects() const
 	return GrabbableObjects;
 }
 
+const TArray<AActor*>& ATagGameGameMode::GetTargetPoints() const
+{
+	return TargetPoints;
+}
+
+const int32 ATagGameGameMode::GetTargetPointsNumIndexed() const
+{
+	return TargetPoints.Num() - 1;
+}
+
 void ATagGameGameMode::BeginPlay()
 {
 	Super::BeginPlay();

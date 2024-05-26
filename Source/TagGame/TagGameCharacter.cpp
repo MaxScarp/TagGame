@@ -69,6 +69,30 @@ void ATagGameCharacter::BeginPlay()
 	}
 }
 
+void ATagGameCharacter::InitTriggerSphere()
+{
+	TriggerSphere = CreateDefaultSubobject<USphereComponent>(TEXT("TriggerSphere"));
+
+	TriggerSphere->InitSphereRadius(100.0f);
+	TriggerSphere->SetCollisionProfileName(TEXT("Trigger"));
+	TriggerSphere->SetupAttachment(GetOwner()->GetRootComponent());
+
+	TriggerSphere->OnComponentBeginOverlap.AddDynamic(this, &ATagGameCharacter::OnSphereOverlapBegin);
+}
+
+void ATagGameCharacter::OnSphereOverlapBegin(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+{
+	APawn* OtherPawn = Cast<APawn>(OtherActor);
+	if (OtherPawn && OtherPawn->GetController()->IsA<AEnemyAIController>())
+	{
+		AEnemyAIController* EnemyController = Cast<AEnemyAIController>(OtherPawn->GetController());
+		if (EnemyController)
+		{
+			EnemyController->ReceiveGrabbableObjectFromPlayer();
+		}
+	}
+}
+
 //////////////////////////////////////////////////////////////////////////
 // Input
 

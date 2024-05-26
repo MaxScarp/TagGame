@@ -10,19 +10,26 @@ AEnemyAIController::AEnemyAIController()
 	BlackboardData = CreateDefaultSubobject<UEnemyAIBlackboardData>(TEXT("BlackboardData"));
 
 	NearestGrabbableObjectKey = TEXT("NearestGrabbableObject");
+	TargetPointToFleeKey = TEXT("TargetPointToFlee");
+}
+
+void AEnemyAIController::ReceiveGrabbableObjectFromPlayer() const
+{
+	UE_LOG(LogTemp, Warning, TEXT("Object passed!"));
 }
 
 void AEnemyAIController::BeginPlay()
 {
 	Super::BeginPlay();
 
+	AGameModeBase* GameModeBase = GetWorld()->GetAuthGameMode();
+	GameMode = Cast<ATagGameGameMode>(GameModeBase);
+
 	InitializeBlackboard(*BlackboardComponent, *BlackboardData);
 
 	SearchForGrabbableObject = MakeShared<CustomAIState>(
 		[this](AAIController* AIController)
 		{
-			AGameModeBase* GameModeBase = AIController->GetWorld()->GetAuthGameMode();
-			ATagGameGameMode* GameMode = Cast<ATagGameGameMode>(GameModeBase);
 			const TArray<AActor*>& GrabbableObjects = GameMode->GetGrabbableObjects();
 
 			AActor* CurrentGrabbableObject = nullptr;
@@ -52,7 +59,7 @@ void AEnemyAIController::BeginPlay()
 				return GoToNearestGrabbableObject;
 			}
 
-			return SearchForGrabbableObject;
+			return Flee;
 		}
 	);
 
@@ -116,9 +123,7 @@ void AEnemyAIController::BeginPlay()
 		nullptr,
 		[this](AAIController* AIController, const float DeltaTime) -> TSharedPtr<CustomAIState>
 		{
-			AActor* NearestGrabbableObject = Cast<AActor>(BlackboardComponent->GetValueAsObject(NearestGrabbableObjectKey));
 			AIController->MoveToActor(AIController->GetWorld()->GetFirstPlayerController()->GetPawn());
-
 			EPathFollowingStatus::Type FollowingStatus = AIController->GetMoveStatus();
 			if (FollowingStatus == EPathFollowingStatus::Moving)
 			{
@@ -130,6 +135,7 @@ void AEnemyAIController::BeginPlay()
 				return ChasePlayer;
 			}
 
+			AActor* NearestGrabbableObject = Cast<AActor>(BlackboardComponent->GetValueAsObject(NearestGrabbableObjectKey));
 			if (NearestGrabbableObject->Implements<UGrabbable>())
 			{
 				IGrabbable::Execute_Grab(NearestGrabbableObject, AIController->GetWorld()->GetFirstPlayerController()->GetPawn());
@@ -139,6 +145,37 @@ void AEnemyAIController::BeginPlay()
 			OnObjectPassedToPlayer.ExecuteIfBound();
 
 			return SearchForGrabbableObject;
+		}
+	);
+
+	Flee = MakeShared<CustomAIState>(
+		[this](AAIController* AIController)
+		{
+			FleeTimer = MaxChangeFleeTargetTimer;
+
+			SetTargetPointToFlee();
+		},
+		nullptr,
+		[this](AAIController* AIController, const float DeltaTime) -> TSharedPtr<CustomAIState>
+		{
+			AActor* TargetPointToFlee = Cast<AActor>(BlackboardComponent->GetValueAsObject(TargetPointToFleeKey));
+			AIController->MoveToActor(TargetPointToFlee);
+			
+			FleeTimer -= DeltaTime;
+			if (FleeTimer <= 0.0f)
+			{
+				FleeTimer = MaxChangeFleeTargetTimer;
+				SetTargetPointToFlee();
+			}
+
+			EPathFollowingStatus::Type FollowingStatus = AIController->GetMoveStatus();
+			if (FollowingStatus == EPathFollowingStatus::Moving)
+			{
+				return nullptr;
+			}
+
+			SetTargetPointToFlee();
+			return Flee;
 		}
 	);
 
@@ -154,4 +191,12 @@ void AEnemyAIController::Tick(float DeltaTime)
 	{
 		CurrentState = CurrentState->CallStay(this, DeltaTime);
 	}
+}
+
+void AEnemyAIController::SetTargetPointToFlee() const
+{
+	const int32 RandomIndex = FMath::RandRange(0, GameMode->GetTargetPointsNumIndexed());
+	AActor* TargetPointToFlee = GameMode->GetTargetPoints()[RandomIndex];
+
+	BlackboardComponent->SetValueAsObject(TargetPointToFleeKey, TargetPointToFlee);
 }
